@@ -11,12 +11,15 @@
 
 namespace Webkul\Sso\Controller\Sso;
 
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 
-class Index extends Action
+class Index extends Action implements CsrfAwareActionInterface
 {
     /**
      * @var \Magento\Framework\View\Result\PageFactory
@@ -106,20 +109,19 @@ class Index extends Action
     {
         $redirectUrl = "";
         $post = $this->getRequest()->getParams();
-        if (!isset($post['redirect_uri']) || $post['redirect_uri'] == "") {
-            $this->messageManager->addError(__('No redirect url provided'));
-            return $this->resultRedirectFactory->create()->setPath($this->_storeManager->getStore()->getBaseUrl());
-        }
+//        if (!isset($post['redirect_uri']) || $post['redirect_uri'] == "") {
+//            $this->messageManager->addError(__('No redirect url provided'));
+//            return $this->resultRedirectFactory->create()->setPath($this->_storeManager->getStore()->getBaseUrl());
+//        }
         if (!isset($post['client_id']) || $post['client_id'] == "") {
             $this->messageManager->addError(__('No client id provided'));
             return $this->resultRedirectFactory->create()->setPath($this->_storeManager->getStore()->getBaseUrl());
         }
-        if (isset($post['redirect_uri'])) {
-            $redirectUrl = $post['redirect_uri'];
-        }
+        $autorizationToken = $this->getRequest()->getParam('client_id');
+        $redirectUrl = $this->_dataHelper->getRedirectUrl($autorizationToken);
         $resultPage = $this->_resultPageFactory->create();
         $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
-        $autorizationToken = $this->getRequest()->getParam('client_id');
+        
         $isAuthorized = $this->_dataHelper->isAuthorized($autorizationToken);
         $isLoggedIn = $this->_dataHelper->isLoggedIn();
         if (isset($post['client_id']) && !isset($post['login']) && !isset($post['authorization'])) {
@@ -177,5 +179,15 @@ class Index extends Action
             }
         }
         return $resultPage;
+    }
+
+    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    {
+        return null;
+    }
+
+    public function validateForCsrf(RequestInterface $request): ?bool
+    {
+        return true;
     }
 }

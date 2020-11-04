@@ -119,13 +119,9 @@ class Data extends AbstractHelper
      *
      * @return String.
      */
-    public function getRedirectUrl()
+    public function getRedirectUrl($autorizationToken = "")
     {
-        $url =  $this->scopeConfig
-                                 ->getValue(
-                                     'sso_conn/sso_config/sso_redirect_url',
-                                     \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-                                 );
-        return $url;
+        $collection = $this->_integrationCollection->addFieldToFilter('client_id', ['eq'=>$autorizationToken]);
+        return  $collection->getFirstItem()->getUrl();
     }
 }
